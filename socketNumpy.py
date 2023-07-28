@@ -4,12 +4,12 @@ import pickle
 import struct
 
 
-class SocketClient():
+class SocketClient:
     def __init__(self, address, port):
         self.address = address
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.type = 'client'
+        self.type = "client"
 
     def connect(self):
         self.socket.connect((self.address, self.port))
@@ -23,17 +23,16 @@ class SocketClient():
 
     def receive_array(self):
         self.payload_size = struct.calcsize("i")
-        self.data = b''
+        self.data = b""
         while len(self.data) < self.payload_size:
-            self.data += self.socket.recv(4096)
-
-        packed_msg_size = self.data[:self.payload_size]
-        self.data = self.data[self.payload_size:]
+            self.data += self.socket.recv(self.payload_size)
+        packed_msg_size = self.data[: self.payload_size]
+        self.data = self.data[self.payload_size :]
         msg_size = struct.unpack("i", packed_msg_size)[0]
 
         # Retrieve all data based on message size
         while len(self.data) < msg_size:
-            self.data += self.socket.recv(4096)
+            self.data += self.socket.recv(min(4096, msg_size - len(self.data)))
 
         frame_data = self.data[:msg_size]
         self.data = self.data[msg_size:]
@@ -41,7 +40,7 @@ class SocketClient():
         # Extract frame
         frame = pickle.loads(frame_data)
         return frame
-    
+
     def send_close_notice(self):
         # Send message length first
         message_size = struct.pack("i", 0)
@@ -52,8 +51,7 @@ class SocketClient():
         self.socket.close()
 
 
-
-class SocketServer():
+class SocketServer:
     def __init__(self, address, port):
         self.address = address
         self.port = port
@@ -65,12 +63,12 @@ class SocketServer():
         self.address = self.address
         self.port = self.port
         self.socket.bind((self.address, self.port))
-        print('Socket bind complete')
+        print("Socket bind complete.\n OK Run Client Program OK")
         self.socket.listen(10)
         self.conn, addr = self.socket.accept()
-        print('Socket now listening')
+        print("Socket now listening")
         self.payload_size = struct.calcsize("i")
-        self.data = b''
+        self.data = b""
 
     def send_numpy_array(self, np_array):
         data = pickle.dumps(np_array)
@@ -80,29 +78,22 @@ class SocketServer():
         self.conn.sendall(message_size + data)
 
     def receive_array(self):
-
         while len(self.data) < self.payload_size:
-            self.data += self.conn.recv(4096)
-
-        packed_msg_size = self.data[:self.payload_size]
-        self.data = self.data[self.payload_size:]
+            self.data += self.conn.recv(self.payload_size)
+        packed_msg_size = self.data[: self.payload_size]
+        self.data = self.data[self.payload_size :]
         msg_size = struct.unpack("i", packed_msg_size)[0]
-
         if msg_size == 0:
-            raise ValueError("0 len received, close socket")
-
+            raise ("0 len received, close socket")
         # Retrieve all data based on message size
         while len(self.data) < msg_size:
-            self.data += self.conn.recv(4096)
-
+            self.data += self.conn.recv(min(4096, msg_size))
         frame_data = self.data[:msg_size]
         self.data = self.data[msg_size:]
 
         # Extract frame
         frame = pickle.loads(frame_data)
         return frame
-    
+
     def close(self):
         self.conn.close()
-
-
