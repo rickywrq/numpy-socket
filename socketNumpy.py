@@ -89,7 +89,7 @@ class SocketServer():
         msg_size = struct.unpack("i", packed_msg_size)[0]
 
         if msg_size == 0:
-            raise("0 len received, close socket")
+            raise ValueError("0 len received, close socket")
 
         # Retrieve all data based on message size
         while len(self.data) < msg_size:
