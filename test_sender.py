@@ -15,8 +15,8 @@ serverPort = args.port
 
 while True:
     try:
-        clientSocket = socketNumpy.SocketClient(serverAddress, serverPort)
-        clientSocket.connect()
+        client_socket = socketNumpy.SocketClient(serverAddress, serverPort)
+        client_socket.connect()
         break
     except:
         continue
@@ -25,8 +25,8 @@ for i in range(100):
     
     
     data = np.ones((100,100))*i
-    clientSocket.send_numpy_array(data)
-    recv = clientSocket.receive_array()
+    client_socket.send_numpy_array(data)
+    recv = client_socket.receive_array()
     print(recv)
-clientSocket.send_close_notice()
-clientSocket.close()
+client_socket.send_close_notice()
+client_socket.close()
